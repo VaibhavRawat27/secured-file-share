@@ -6,7 +6,6 @@ import qrcode
 from io import BytesIO
 import time
 import urllib.parse
-import requests
 
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="SecureShare | Safe File Hosting", layout="centered")
@@ -67,25 +66,24 @@ if file_id:
             st.markdown("🔗 **Secure Download Link:**")
             st.code(file_url)
 
-            # 🔽 Download Button (Reliable)
-            with st.spinner("Preparing file for download..."):
-                try:
-                    response = requests.get(file_url, stream=True)
-                    if response.status_code == 200:
-                        file_data = BytesIO()
-                        for chunk in response.iter_content(chunk_size=8192):
-                            file_data.write(chunk)
-                        file_data.seek(0)
-                        st.download_button(
-                            label="⬇️ Download File",
-                            data=file_data,
-                            file_name=file_name,
-                            mime="application/octet-stream"
-                        )
-                    else:
-                        st.warning("⚠️ Could not fetch file. Use the link above.")
-                except Exception as e:
-                    st.error(f"❌ Failed to fetch file: {str(e)}")
+            # ✅ Direct HTML-style Download Button
+            download_button_html = f"""
+                <a href="{file_url}" download target="_blank">
+                    <button style="
+                        background-color: #4CAF50;
+                        color: white;
+                        padding: 10px 20px;
+                        border: none;
+                        border-radius: 6px;
+                        font-size: 16px;
+                        cursor: pointer;
+                        margin-top: 10px;
+                    ">
+                    ⬇️ Download File
+                    </button>
+                </a>
+            """
+            st.markdown(download_button_html, unsafe_allow_html=True)
 
             # QR code
             qr = qrcode.make(file_url)
@@ -133,7 +131,7 @@ if uploaded_files and file_password:
             file_url = result.get("secure_url")
             public_id = result.get("public_id")
 
-            # For deployment, use actual app URL
+            # Your deployed app URL
             base_url = "https://secured-file-share.streamlit.app/"
             access_url = f"{base_url}?file={urllib.parse.quote(public_id)}"
 
@@ -182,7 +180,7 @@ Perfect for confidential, temporary file sharing.
 st.markdown("""
 ---
 🛠️ **Open Source:**  
-View or contribute on GitHub 👉 [github.com/vaibhavrawat27/SecureShare](https://github.com/VaibhavRawat27/secure-file-share)
+View or contribute on GitHub 👉 [github.com/vaibhavrawat27/SecureShare](https://github.com/vaibhavrawat27/SecureShare)
 """)
 
 st.markdown("📧 Built by Vaibhav Rawat • ☁️ Powered by Cloudinary • 🐍 Made with Python & Streamlit")
