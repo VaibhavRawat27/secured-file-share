@@ -54,7 +54,7 @@ if file_id:
             st.error("⏰ This file has expired and is no longer accessible.")
             st.stop()
 
-        # 🔍 Debug (remove in production)
+        # 🔍 Debug (optional, remove later)
         st.write("🔍 Stored password:", repr(original_password))
         st.write("🔍 Entered password:", repr(password_input))
 
@@ -98,18 +98,16 @@ if uploaded_files and file_password:
         expires_at = int(time.time() + expiry_hours * 3600)
 
         try:
+            # ✅ Flatten context using Cloudinary string format
+            context_str = f"password={file_password}|expires_at={str(expires_at)}"
+
             result = cloudinary.uploader.upload(
                 uploaded_file,
                 folder=UPLOAD_FOLDER,
                 resource_type="raw",
                 use_filename=True,
                 unique_filename=True,
-                context={
-                    "custom": {
-                        "password": file_password,
-                        "expires_at": str(expires_at)
-                    }
-                }
+                context=context_str
             )
 
             file_url = result.get("secure_url")
