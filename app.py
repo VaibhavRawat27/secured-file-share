@@ -54,8 +54,12 @@ if file_id:
             st.error("⏰ This file has expired and is no longer accessible.")
             st.stop()
 
-        # Ensure string comparison
-        if str(password_input) == str(original_password):
+        # 🔍 Debug (remove in production)
+        st.write("🔍 Stored password:", repr(original_password))
+        st.write("🔍 Entered password:", repr(password_input))
+
+        # ✅ Safe comparison
+        if str(password_input).strip() == str(original_password).strip():
             time_left = expires_at - current_time
             mins_left = max(1, int(time_left / 60))
             st.success(f"✅ Access granted! Time remaining: {mins_left} minutes")
