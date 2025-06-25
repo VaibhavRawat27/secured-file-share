@@ -55,7 +55,7 @@ if file_id:
             st.error("⏰ This file has expired and is no longer accessible.")
             st.stop()
 
-        # ✅ Safe comparison
+        # ✅ Safe password comparison
         if str(password_input).strip() == str(original_password).strip():
             time_left = expires_at - current_time
             mins_left = max(1, int(time_left / 60))
@@ -67,17 +67,25 @@ if file_id:
             st.markdown("🔗 **Secure Download Link:**")
             st.code(file_url)
 
-            # 🔽 Download Button
-            response = requests.get(file_url)
-            if response.status_code == 200:
-                st.download_button(
-                    label="⬇️ Download File",
-                    data=response.content,
-                    file_name=file_name,
-                    mime='application/octet-stream'
-                )
-            else:
-                st.warning("⚠️ Could not load file for download button. Use the link instead.")
+            # 🔽 Download Button (Reliable)
+            with st.spinner("Preparing file for download..."):
+                try:
+                    response = requests.get(file_url, stream=True)
+                    if response.status_code == 200:
+                        file_data = BytesIO()
+                        for chunk in response.iter_content(chunk_size=8192):
+                            file_data.write(chunk)
+                        file_data.seek(0)
+                        st.download_button(
+                            label="⬇️ Download File",
+                            data=file_data,
+                            file_name=file_name,
+                            mime="application/octet-stream"
+                        )
+                    else:
+                        st.warning("⚠️ Could not fetch file. Use the link above.")
+                except Exception as e:
+                    st.error(f"❌ Failed to fetch file: {str(e)}")
 
             # QR code
             qr = qrcode.make(file_url)
@@ -159,22 +167,22 @@ st.markdown("### ℹ️ About SecureShare")
 st.write("""
 **SecureShare** is a privacy-first file sharing tool built with **Streamlit** and **Cloudinary**.
 
-Features include:
+### 🔐 Features:
 
-✅ Upload any file format (PDF, EXE, ZIP, DOCX, etc.)  
-✅ Set custom expiry time  
-✅ Password-protect every upload  
-✅ QR code & shareable secure link  
-✅ Files auto-delete after expiry  
-✅ No login required
+- Upload **any file format** (PDF, EXE, ZIP, DOCX, etc.)
+- Set **custom expiry time**
+- Add a **password for access**
+- **QR code + secure link** sharing
+- **Auto-deletes** after expiry
+- No login or account needed
 
-Perfect for sharing confidential files temporarily and securely.
+Perfect for confidential, temporary file sharing.
 """)
 
 st.markdown("""
 ---
 🛠️ **Open Source:**  
-View or contribute on GitHub 👉 [github.com/vaibhavrawat27/SecureShare](https://github.com/vaibhavrawat27/SecureShare)
+View or contribute on GitHub 👉 [github.com/vaibhavrawat27/SecureShare](https://github.com/VaibhavRawat27/secure-file-share)
 """)
 
 st.markdown("📧 Built by Vaibhav Rawat • ☁️ Powered by Cloudinary • 🐍 Made with Python & Streamlit")
