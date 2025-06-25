@@ -6,12 +6,13 @@ import qrcode
 from io import BytesIO
 import time
 import urllib.parse
+import requests
 
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="SecureShare | Safe File Hosting", layout="centered")
 st.title("🔐 SecureShare")
-st.caption("Upload any file securely with optional password and expiry time.")
-st.markdown("📁 Uploads auto-delete after the set time. Each file has a secure link and QR code.")
+st.caption("Upload any file securely with password and expiry control.")
+st.markdown("📁 Files auto-delete after the selected time. Each file has a secure access link & QR code.")
 
 # --- INIT CONFIG ---
 cloudinary.config(
@@ -54,20 +55,32 @@ if file_id:
             st.error("⏰ This file has expired and is no longer accessible.")
             st.stop()
 
-        # 🔍 Debug (optional, remove later)
-        # st.write("🔍 Stored password:", repr(original_password))
-        # st.write("🔍 Entered password:", repr(password_input))
-
         # ✅ Safe comparison
         if str(password_input).strip() == str(original_password).strip():
             time_left = expires_at - current_time
             mins_left = max(1, int(time_left / 60))
             st.success(f"✅ Access granted! Time remaining: {mins_left} minutes")
 
-            st.markdown("🔗 **Secure Download Link:**")
-            st.code(file_details["secure_url"])
+            file_url = file_details["secure_url"]
+            file_name = file_details.get("original_filename", "download")
 
-            qr = qrcode.make(file_details["secure_url"])
+            st.markdown("🔗 **Secure Download Link:**")
+            st.code(file_url)
+
+            # 🔽 Download Button
+            response = requests.get(file_url)
+            if response.status_code == 200:
+                st.download_button(
+                    label="⬇️ Download File",
+                    data=response.content,
+                    file_name=file_name,
+                    mime='application/octet-stream'
+                )
+            else:
+                st.warning("⚠️ Could not load file for download button. Use the link instead.")
+
+            # QR code
+            qr = qrcode.make(file_url)
             buf = BytesIO()
             qr.save(buf, format="PNG")
             buf.seek(0)
@@ -98,7 +111,6 @@ if uploaded_files and file_password:
         expires_at = int(time.time() + expiry_hours * 3600)
 
         try:
-            # ✅ Flatten context using Cloudinary string format
             context_str = f"password={file_password}|expires_at={str(expires_at)}"
 
             result = cloudinary.uploader.upload(
@@ -113,13 +125,13 @@ if uploaded_files and file_password:
             file_url = result.get("secure_url")
             public_id = result.get("public_id")
 
-            # ✅ Localhost testing URL
+            # For deployment, use actual app URL
             base_url = "https://secured-file-share.streamlit.app/"
             access_url = f"{base_url}?file={urllib.parse.quote(public_id)}"
 
             st.success("✅ Upload successful!")
 
-            st.markdown("🔗 **Secure Access Link (share this)**")
+            st.markdown("🔗 **Secure Access Link (share this):**")
             st.code(access_url)
 
             qr = qrcode.make(access_url)
@@ -145,20 +157,24 @@ elif uploaded_files and not file_password:
 st.markdown("---")
 st.markdown("### ℹ️ About SecureShare")
 st.write("""
-SecureShare is a secure file sharing platform built using **Streamlit** and **Cloudinary**.
+**SecureShare** is a privacy-first file sharing tool built with **Streamlit** and **Cloudinary**.
 
-✅ All File Types  
-✅ Set Expiry Time  
-✅ QR Code Sharing  
-✅ Password Protected  
-✅ No Account Needed
+Features include:
+
+✅ Upload any file format (PDF, EXE, ZIP, DOCX, etc.)  
+✅ Set custom expiry time  
+✅ Password-protect every upload  
+✅ QR code & shareable secure link  
+✅ Files auto-delete after expiry  
+✅ No login required
+
+Perfect for sharing confidential files temporarily and securely.
 """)
 
 st.markdown("""
 ---
-🧪 **Note:**  
-SecureShare is in test mode. Files auto-delete after selected time.  
-Usage is monitored — please don’t misuse the service.
+🛠️ **Open Source:**  
+View or contribute on GitHub 👉 [github.com/vaibhavrawat27/SecureShare](https://github.com/vaibhavrawat27/SecureShare)
 """)
 
-st.markdown("📧 Built by Vaibhav Rawat • ☁️ Powered by Cloudinary • 🐍 Made with Python")
+st.markdown("📧 Built by Vaibhav Rawat • ☁️ Powered by Cloudinary • 🐍 Made with Python & Streamlit")
