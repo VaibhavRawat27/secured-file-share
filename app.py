@@ -164,7 +164,7 @@ Features include:
 st.markdown("""
 ---
 🛠️ **Open Source:**  
-View or contribute on GitHub 👉 [github.com/vaibhavrawat27/SecureShare](https://github.com/vaibhavrawat27/SecureShare)
+View or contribute on GitHub 👉 [github.com/vaibhavrawat27/secured-file-share](https://github.com/VaibhavRawat27/secured-file-share)
 """)
 
 st.markdown("📧 Built by Vaibhav Rawat • ☁️ Powered by Cloudinary • 🐍 Made with Python & Streamlit")
