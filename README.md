@@ -161,7 +161,7 @@ Feel free to fork this project, improve it, and submit a pull request.
 Made with ❤️ by **Vaibhav Rawat**
 
 📧 Email: [rawatvaibhav27@gmail.com](mailto:rawatvaibhav27@gmail.com)  
-🌐 Portfolio: [vaibhavrawat.in](https://vaibhavrawat.in)  
+🌐 Linkedin: [@vaibhavrawat27](https://www.linkedin.com/in/vaibhavrawat27/)
 🐙 GitHub: [@vaibhavrawat27](https://github.com/vaibhavrawat27)
 
 ---
