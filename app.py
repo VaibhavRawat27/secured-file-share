@@ -54,7 +54,6 @@ if file_id:
             st.error("⏰ This file has expired and is no longer accessible.")
             st.stop()
 
-        # ✅ Safe password comparison
         if str(password_input).strip() == str(original_password).strip():
             time_left = expires_at - current_time
             mins_left = max(1, int(time_left / 60))
@@ -66,26 +65,10 @@ if file_id:
             st.markdown("🔗 **Secure Download Link:**")
             st.code(file_url)
 
-            # ✅ Direct HTML-style Download Button
-            download_button_html = f"""
-                <a href="{file_url}" download target="_blank">
-                    <button style="
-                        background-color: #4CAF50;
-                        color: white;
-                        padding: 10px 20px;
-                        border: none;
-                        border-radius: 6px;
-                        font-size: 16px;
-                        cursor: pointer;
-                        margin-top: 10px;
-                    ">
-                    ⬇️ Download File
-                    </button><br><br>
-                </a>
-            """
-            st.markdown(download_button_html, unsafe_allow_html=True)
+            # ✅ Download link as button
+            st.markdown(f"[⬇️ Click to Download File]({file_url})", unsafe_allow_html=True)
 
-            # QR code
+            # QR Code
             qr = qrcode.make(file_url)
             buf = BytesIO()
             qr.save(buf, format="PNG")
@@ -105,59 +88,61 @@ if file_id:
 # --- UPLOADER SECTION ---
 st.markdown("### 📤 Upload New Files")
 
-uploaded_files = st.file_uploader("Select file(s) to upload", type=None, accept_multiple_files=True)
-expiry_hours = st.slider("⏰ Set expiry time (hours)", 1, 48, 6)
 file_password = st.text_input("🔑 Set a password to access the file(s)", type="password")
 
-if uploaded_files and file_password:
-    for uploaded_file in uploaded_files:
-        st.markdown("---")
-        st.info(f"Uploading `{uploaded_file.name}`...")
+if file_password.strip():
+    expiry_hours = st.slider("⏰ Set expiry time (hours)", 1, 48, 6)
+    uploaded_files = st.file_uploader("📂 Select file(s) to upload", type=None, accept_multiple_files=True)
 
-        expires_at = int(time.time() + expiry_hours * 3600)
+    if uploaded_files:
+        for uploaded_file in uploaded_files:
+            st.markdown("---")
+            st.info(f"Uploading `{uploaded_file.name}`...")
 
-        try:
-            context_str = f"password={file_password}|expires_at={str(expires_at)}"
+            expires_at = int(time.time() + expiry_hours * 3600)
 
-            result = cloudinary.uploader.upload(
-                uploaded_file,
-                folder=UPLOAD_FOLDER,
-                resource_type="raw",
-                use_filename=True,
-                unique_filename=True,
-                context=context_str
-            )
+            try:
+                context_str = f"password={file_password}|expires_at={str(expires_at)}"
 
-            file_url = result.get("secure_url")
-            public_id = result.get("public_id")
+                result = cloudinary.uploader.upload(
+                    uploaded_file,
+                    folder=UPLOAD_FOLDER,
+                    resource_type="raw",
+                    use_filename=True,
+                    unique_filename=True,
+                    context=context_str
+                )
 
-            # Your deployed app URL
-            base_url = "https://secured-file-share.streamlit.app/"
-            access_url = f"{base_url}?file={urllib.parse.quote(public_id)}"
+                file_url = result.get("secure_url")
+                public_id = result.get("public_id")
 
-            st.success("✅ Upload successful!")
+                base_url = "https://secured-file-share.streamlit.app/"
+                access_url = f"{base_url}?file={urllib.parse.quote(public_id)}"
 
-            st.markdown("🔗 **Secure Access Link (share this):**")
-            st.code(access_url)
+                st.success("✅ Upload successful!")
 
-            qr = qrcode.make(access_url)
-            buf = BytesIO()
-            qr.save(buf, format="PNG")
-            buf.seek(0)
-            st.image(buf, caption="📱 Scan to access file", width=180)
+                st.markdown("🔗 **Secure Access Link (share this):**")
+                st.code(access_url)
 
-            time_left_min = int((expires_at - time.time()) / 60)
-            st.markdown(f"""
-            **🆔 Public ID:** `{public_id}`  
-            **⏱️ Time left:** {time_left_min} minutes  
-            **📂 Folder:** `{UPLOAD_FOLDER}`
-            """)
+                qr = qrcode.make(access_url)
+                buf = BytesIO()
+                qr.save(buf, format="PNG")
+                buf.seek(0)
+                st.image(buf, caption="📱 Scan to access file", width=180)
 
-        except Exception as e:
-            st.error(f"❌ Upload failed: {str(e)}")
+                time_left_min = int((expires_at - time.time()) / 60)
+                st.markdown(f"""
+**🆔 Public ID:** `{public_id}`  
+**⏱️ Time left:** {time_left_min} minutes  
+**📂 Folder:** `{UPLOAD_FOLDER}`
+                """)
 
-elif uploaded_files and not file_password:
-    st.warning("🔐 Please set a password to protect uploaded files.")
+            except Exception as e:
+                st.error(f"❌ Upload failed: {str(e)}")
+    else:
+        st.info("📂 Please select at least one file to upload.")
+else:
+    st.warning("🔐 Please set a password to enable file upload.")
 
 # --- FOOTER ---
 st.markdown("---")
@@ -165,22 +150,20 @@ st.markdown("### ℹ️ About SecureShare")
 st.write("""
 **SecureShare** is a privacy-first file sharing tool built with **Streamlit** and **Cloudinary**.
 
-### 🔐 Features:
+Features include:
 
-- Upload **any file format** (PDF, EXE, ZIP, DOCX, etc.)
-- Set **custom expiry time**
-- Add a **password for access**
-- **QR code + secure link** sharing
-- **Auto-deletes** after expiry
-- No login or account needed
-
-Perfect for confidential, temporary file sharing.
+✅ Upload any file format (PDF, EXE, ZIP, DOCX, etc.)  
+✅ Set custom expiry time  
+✅ Password-protect every upload  
+✅ QR code & shareable secure link  
+✅ Files auto-delete after expiry  
+✅ No login required
 """)
 
 st.markdown("""
 ---
 🛠️ **Open Source:**  
-View or contribute on GitHub 👉 [github.com/vaibhavrawat27/SecureShare](https://github.com/VaibhavRawat27/secure-file-share)
+View or contribute on GitHub 👉 [github.com/vaibhavrawat27/SecureShare](https://github.com/vaibhavrawat27/SecureShare)
 """)
 
 st.markdown("📧 Built by Vaibhav Rawat • ☁️ Powered by Cloudinary • 🐍 Made with Python & Streamlit")
