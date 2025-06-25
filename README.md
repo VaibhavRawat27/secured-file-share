@@ -51,8 +51,8 @@ Follow the steps below to run the project locally on your machine:
 ### 1️⃣ Clone the Repository
 
 ```bash
-git clone https://github.com/vaibhavrawat27/SecureShare.git
-cd SecureShare
+git clone https://github.com/vaibhavrawat27/secured-file-share.git
+cd secured-file-share
 ```
 
 ### 2️⃣ Install Dependencies
@@ -76,10 +76,10 @@ Create a file: `.streamlit/secrets.toml` and add your **Cloudinary credentials**
 cloud_name = "your_cloud_name"
 api_key = "your_api_key"
 api_secret = "your_api_secret"
-UPLOAD_FOLDER = "secured-share"
+UPLOAD_FOLDER = "your_folder_name"
 
 # Optional admin password if used for access
-CORRECT_PASSWORD = "admin123"
+CORRECT_PASSWORD = "your_password"
 ```
 
 > 🔐 Get credentials by signing up at [https://cloudinary.com](https://cloudinary.com)
