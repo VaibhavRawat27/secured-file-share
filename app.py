@@ -55,8 +55,8 @@ if file_id:
             st.stop()
 
         # 🔍 Debug (optional, remove later)
-        st.write("🔍 Stored password:", repr(original_password))
-        st.write("🔍 Entered password:", repr(password_input))
+        # st.write("🔍 Stored password:", repr(original_password))
+        # st.write("🔍 Entered password:", repr(password_input))
 
         # ✅ Safe comparison
         if str(password_input).strip() == str(original_password).strip():
