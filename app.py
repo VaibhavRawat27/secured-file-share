@@ -13,16 +13,27 @@ st.title("🔐 SecureShare")
 st.caption("Upload any file securely with password and expiry control.")
 st.markdown("📁 Files auto-delete after the selected time. Each file has a secure access link & QR code.")
 
+# --- HOW TO USE ---
+with st.expander("ℹ️ How to Use SecureShare", expanded=True):
+    st.markdown("""
+**Step 1:** Set a password below to secure your file  
+**Step 2:** Choose how many hours the file should remain accessible  
+**Step 3:** Upload any file you want to share  
+**Step 4:** You'll get a secure access link & QR code to share  
+**Step 5:** Anyone with the link must enter the password to access the file  
+
+⚠️ The file will automatically be deleted after the set time.
+    """)
+
 # --- INIT CONFIG ---
 cloudinary.config(
     cloud_name=st.secrets["cloudinary"]["cloud_name"],
     api_key=st.secrets["cloudinary"]["api_key"],
     api_secret=st.secrets["cloudinary"]["api_secret"]
 )
-
 UPLOAD_FOLDER = st.secrets["cloudinary"]["UPLOAD_FOLDER"]
 
-# --- FILE ACCESS FROM QUERY PARAMS ---
+# --- FILE ACCESS (via link) ---
 query_params = st.query_params
 file_id = query_params.get("file")
 
@@ -42,12 +53,7 @@ if file_id:
 
         original_password = metadata.get("password")
         expires_raw = metadata.get("expires_at")
-
-        try:
-            expires_at = int(float(expires_raw)) if expires_raw else 0
-        except ValueError:
-            expires_at = 0
-
+        expires_at = int(float(expires_raw)) if expires_raw else 0
         current_time = int(time.time())
 
         if expires_at and current_time > expires_at:
@@ -64,11 +70,8 @@ if file_id:
 
             st.markdown("🔗 **Secure Download Link:**")
             st.code(file_url)
-
-            # ✅ Download link as button
             st.markdown(f"[⬇️ Click to Download File]({file_url})", unsafe_allow_html=True)
 
-            # QR Code
             qr = qrcode.make(file_url)
             buf = BytesIO()
             qr.save(buf, format="PNG")
@@ -85,7 +88,7 @@ if file_id:
         st.error("⚠️ File not found. It might have been deleted or the ID is invalid.")
         st.stop()
 
-# --- UPLOADER SECTION ---
+# --- UPLOAD SECTION ---
 st.markdown("### 📤 Upload New Files")
 
 file_password = st.text_input("🔑 Set a password to access the file(s)", type="password")
@@ -100,7 +103,6 @@ if file_password.strip():
             st.info(f"Uploading `{uploaded_file.name}`...")
 
             expires_at = int(time.time() + expiry_hours * 3600)
-
             try:
                 context_str = f"password={file_password}|expires_at={str(expires_at)}"
 
@@ -115,7 +117,6 @@ if file_password.strip():
 
                 file_url = result.get("secure_url")
                 public_id = result.get("public_id")
-
                 base_url = "https://secured-file-share.streamlit.app/"
                 access_url = f"{base_url}?file={urllib.parse.quote(public_id)}"
 
