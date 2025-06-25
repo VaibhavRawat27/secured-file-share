@@ -80,7 +80,7 @@ if file_id:
                         margin-top: 10px;
                     ">
                     ⬇️ Download File
-                    </button>
+                    </button><br><br>
                 </a>
             """
             st.markdown(download_button_html, unsafe_allow_html=True)
