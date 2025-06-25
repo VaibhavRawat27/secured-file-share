@@ -180,7 +180,7 @@ Perfect for confidential, temporary file sharing.
 st.markdown("""
 ---
 🛠️ **Open Source:**  
-View or contribute on GitHub 👉 [github.com/vaibhavrawat27/SecureShare](https://github.com/vaibhavrawat27/SecureShare)
+View or contribute on GitHub 👉 [github.com/vaibhavrawat27/SecureShare](https://github.com/VaibhavRawat27/secure-file-share)
 """)
 
 st.markdown("📧 Built by Vaibhav Rawat • ☁️ Powered by Cloudinary • 🐍 Made with Python & Streamlit")
