@@ -1,35 +1,19 @@
 import streamlit as st
 import cloudinary
 import cloudinary.uploader
+import cloudinary.api
 import qrcode
 from io import BytesIO
 import time
+import urllib.parse
 
 # --- PAGE CONFIG ---
-st.set_page_config(page_title="SecureShare | All Format Uploader", layout="centered")
+st.set_page_config(page_title="SecureShare | Safe File Hosting", layout="centered")
 st.title("🔐 SecureShare")
-st.subheader("Upload any file securely. Auto-deletes after 6 hours.")
-st.caption("All formats supported: PDF, ZIP, DOCX, MP4, EXE, RAW, CSV, etc.")
-st.markdown("📁 You can upload multiple files. Each will have a secure link & QR code.")
+st.caption("Upload any file securely with optional password and expiry time.")
+st.markdown("📁 Uploads auto-delete after the set time. Each file has a secure link and QR code.")
 
-# --- PASSWORD PROTECTION ---
-CORRECT_PASSWORD = st.secrets["CORRECT_PASSWORD"]
-
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-
-if not st.session_state.authenticated:
-    st.warning("🔒 This site is password protected. To request access, email: **rawatvaibhav27@gmail.com**")
-    password = st.text_input("Enter password to continue", type="password")
-    if password == CORRECT_PASSWORD:
-        st.session_state.authenticated = True
-        st.success("✅ Access granted!")
-        st.rerun()
-    elif password:
-        st.error("❌ Incorrect password.")
-    st.stop()
-
-# --- CLOUDINARY CONFIG ---
+# --- INIT CONFIG ---
 cloudinary.config(
     cloud_name=st.secrets["cloudinary"]["cloud_name"],
     api_key=st.secrets["cloudinary"]["api_key"],
@@ -38,67 +22,141 @@ cloudinary.config(
 
 UPLOAD_FOLDER = st.secrets["cloudinary"]["UPLOAD_FOLDER"]
 
-# --- FILE UPLOADER ---
-uploaded_files = st.file_uploader("📂 Upload files", type=None, accept_multiple_files=True)
+# --- FILE ACCESS FROM QUERY PARAMS ---
+query_params = st.query_params
+file_id = query_params.get("file")
 
-if uploaded_files:
-    for uploaded_file in uploaded_files:
-        st.markdown("---")
-        st.info(f"📄 Uploading: `{uploaded_file.name}` ({uploaded_file.size / 1024:.2f} KB)")
+if file_id:
+    st.markdown("### 🔗 File Access")
+    st.info(f"Accessing file ID: `{file_id}`")
 
-        expires_at = int(time.time() + 6 * 60 * 60)  # 6 hours from now
+    password_input = st.text_input("Enter password to access file", type="password")
+
+    try:
+        file_details = cloudinary.api.resource(file_id, resource_type="raw")
+        metadata = file_details.get("context", {}).get("custom", {})
+
+        if not metadata:
+            st.error("❌ No metadata found. File may be expired or not uploaded via SecureShare.")
+            st.stop()
+
+        original_password = metadata.get("password")
+        expires_raw = metadata.get("expires_at")
 
         try:
-            upload_result = cloudinary.uploader.upload(
-                uploaded_file,
-                folder=UPLOAD_FOLDER,
-                resource_type="raw",
-                use_filename=True,
-                unique_filename=True,
-                expires_at=expires_at
-            )
+            expires_at = int(float(expires_raw)) if expires_raw else 0
+        except ValueError:
+            expires_at = 0
 
-            file_url = upload_result.get("secure_url")
-            public_id = upload_result.get("public_id")
+        current_time = int(time.time())
 
-            st.success(f"✅ Uploaded `{uploaded_file.name}` successfully!")
+        if expires_at and current_time > expires_at:
+            st.error("⏰ This file has expired and is no longer accessible.")
+            st.stop()
+
+        # Ensure string comparison
+        if str(password_input) == str(original_password):
+            time_left = expires_at - current_time
+            mins_left = max(1, int(time_left / 60))
+            st.success(f"✅ Access granted! Time remaining: {mins_left} minutes")
 
             st.markdown("🔗 **Secure Download Link:**")
-            st.code(file_url)
+            st.code(file_details["secure_url"])
 
-            qr = qrcode.make(file_url)
+            qr = qrcode.make(file_details["secure_url"])
             buf = BytesIO()
             qr.save(buf, format="PNG")
             buf.seek(0)
             st.image(buf, caption="📱 Scan to download", width=180)
 
+            st.markdown(f"**🆔 File ID:** `{file_id}`")
+
+        elif password_input:
+            st.error("❌ Incorrect password.")
+        st.stop()
+
+    except cloudinary.exceptions.NotFound:
+        st.error("⚠️ File not found. It might have been deleted or the ID is invalid.")
+        st.stop()
+
+# --- UPLOADER SECTION ---
+st.markdown("### 📤 Upload New Files")
+
+uploaded_files = st.file_uploader("Select file(s) to upload", type=None, accept_multiple_files=True)
+expiry_hours = st.slider("⏰ Set expiry time (hours)", 1, 48, 6)
+file_password = st.text_input("🔑 Set a password to access the file(s)", type="password")
+
+if uploaded_files and file_password:
+    for uploaded_file in uploaded_files:
+        st.markdown("---")
+        st.info(f"Uploading `{uploaded_file.name}`...")
+
+        expires_at = int(time.time() + expiry_hours * 3600)
+
+        try:
+            result = cloudinary.uploader.upload(
+                uploaded_file,
+                folder=UPLOAD_FOLDER,
+                resource_type="raw",
+                use_filename=True,
+                unique_filename=True,
+                context={
+                    "custom": {
+                        "password": file_password,
+                        "expires_at": str(expires_at)
+                    }
+                }
+            )
+
+            file_url = result.get("secure_url")
+            public_id = result.get("public_id")
+
+            # ✅ Localhost testing URL
+            base_url = "https://secured-file-share.streamlit.app/"
+            access_url = f"{base_url}?file={urllib.parse.quote(public_id)}"
+
+            st.success("✅ Upload successful!")
+
+            st.markdown("🔗 **Secure Access Link (share this)**")
+            st.code(access_url)
+
+            qr = qrcode.make(access_url)
+            buf = BytesIO()
+            qr.save(buf, format="PNG")
+            buf.seek(0)
+            st.image(buf, caption="📱 Scan to access file", width=180)
+
+            time_left_min = int((expires_at - time.time()) / 60)
             st.markdown(f"""
-            **🗂️ Folder:** `{UPLOAD_FOLDER}`  
-            **🕒 Auto-deletes after:** 6 hours  
-            **🆔 Public ID:** `{public_id}`
+            **🆔 Public ID:** `{public_id}`  
+            **⏱️ Time left:** {time_left_min} minutes  
+            **📂 Folder:** `{UPLOAD_FOLDER}`
             """)
 
         except Exception as e:
-            st.error(f"❌ Failed to upload `{uploaded_file.name}`")
-            st.error(str(e))
+            st.error(f"❌ Upload failed: {str(e)}")
+
+elif uploaded_files and not file_password:
+    st.warning("🔐 Please set a password to protect uploaded files.")
 
 # --- FOOTER ---
 st.markdown("---")
 st.markdown("### ℹ️ About SecureShare")
 st.write("""
-SecureShare is a file sharing app built with **Streamlit** and **Cloudinary**, supporting **any file format**.
-It creates secure download links and QR codes. Files auto-delete after 6 hours.
+SecureShare is a secure file sharing platform built using **Streamlit** and **Cloudinary**.
 
-✅ **Supports All File Types**  
-✅ **QR Code Sharing**  
-✅ **No Login Required**
+✅ All File Types  
+✅ Set Expiry Time  
+✅ QR Code Sharing  
+✅ Password Protected  
+✅ No Account Needed
 """)
 
 st.markdown("""
 ---
-🔧 **Note:**  
-This is an under-development project in test mode.  
-Please do not misuse this service. Abuse is monitored.
+🧪 **Note:**  
+SecureShare is in test mode. Files auto-delete after selected time.  
+Usage is monitored — please don’t misuse the service.
 """)
 
 st.markdown("📧 Built by Vaibhav Rawat • ☁️ Powered by Cloudinary • 🐍 Made with Python")
