@@ -51,7 +51,7 @@ Follow the steps below to run the project locally on your machine:
 ### 1️⃣ Clone the Repository
 
 ```bash
-git clone https://github.com/vaibhavrawat27/secured-file-share.git
+git clone https://github.com/vaibhavrawat27/Secured-File-Share.git
 cd secured-file-share
 ```
 
@@ -160,4 +160,4 @@ This project is licensed under the **MIT License** — feel free to use, fork, a
 
 ## 🔗 GitHub Repo
 
-👉 [github.com/vaibhavrawat27/SecureShare](https://github.com/vaibhavrawat27/Secured-file-Share)
+👉 [github.com/vaibhavrawat27/Secure-file-Share](https://github.com/vaibhavrawat27/Secured-File-Share)
