@@ -8,8 +8,8 @@ import time
 import urllib.parse
 
 # --- PAGE CONFIG ---
-st.set_page_config(page_title="SecureShare | Safe File Hosting", layout="centered")
-st.title("🔐 SecureShare")
+st.set_page_config(page_title="SecuredFileShare | Safe File Hosting", layout="centered")
+st.title("🔐 Secured File Share")
 st.caption("Upload any file securely with password and expiry control.")
 st.markdown("📁 Files auto-delete after the selected time. Each file has a secure access link & QR code.")
 
