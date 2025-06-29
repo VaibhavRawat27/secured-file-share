@@ -175,3 +175,4 @@ This project is licensed under the **MIT License** — feel free to use, fork, a
 ## 🔗 GitHub Repo
 
 👉 [github.com/vaibhavrawat27/Secure-file-Share](https://github.com/vaibhavrawat27/Secured-File-Share)
+About project PPT - https://docs.google.com/presentation/d/1mbJscLJkETYKLkoCa6OX7_0lmCIyZ6TW5aQaW6jMfdw/edit?usp=sharing
